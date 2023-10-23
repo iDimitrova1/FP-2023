@@ -95,9 +95,9 @@
     (if (> i (quotient n 2))
         sum
         (if (= 0 (remainder n i))
-        (+ (divisors-sum (+ i 1) (+ sum i)))
-        (divisors-sum (+ i 1) sum))))
-  (eq? n (divisors-sum 2 1)) )
+          (divisors-sum (+ i 1) (+ sum i))
+          (divisors-sum (+ i 1) sum))))
+  (= n (divisors-sum 2 1)) )
 
 ;zad 7
 (define (binary-to-decimal n)
@@ -108,6 +108,15 @@
           (iter (+ 1 i) (quotient n 10)))
         0))
   (iter 0 n))
+
+(define (binary-to-decimal n)
+  (define (iter i n num)
+    (if (> n 0)
+        (if (= (remainder n 10) 1)
+           (iter (+ 1 i) (quotient n 10) (+ (expt 2 i) num))
+          (iter (+ 1 i) (quotient n 10) num))
+        num))
+  (iter 0 n 0))
 
 ;zad 8
 (define (decimal-to-binary n)
