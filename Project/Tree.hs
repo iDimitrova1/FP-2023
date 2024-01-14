@@ -219,22 +219,6 @@ splitTreeNTimesAutoRule dimensions n t = helper n t 0
 
 -- splitTreeNTimesAutoRule 4 10 (generateTreeList 200 12 4 (0, 99))
 
--- writeFile "TreeVisual.scm" (showTree t)
--- writeFile "TreeVisual.scm" (showTree (splitTree (splitLeaf (Leaf [MkKPoint [1, 2, 3], MkKPoint [2, 1, 3], MkKPoint [3, 2, 5], MkKPoint[6, 3, 1]]) (1, 2)) (2, 3)) 1)
-
-showTree :: Tree [KPoint] -> Int -> String
-showTree (Node l c r) n =
-  replicate ((length $ show c) * n) ' '
-    ++ show c
-    ++ "\n"
-    ++ showTree l (n + 1)
-    ++ "|"
-    ++ replicate ((length $ show c) * n) ' '
-    ++ "|"
-    ++ showTree r (n + 1)
-    ++ "\n"
-showTree (Leaf a) n = show a
-
 searchTree :: Tree [KPoint] -> (KPoint, KPoint) -> [KPoint]
 searchTree (Node l (MkKnot ((minVL, maxVL), (minVR, maxVR))) r) (a, b)
   | (minVL > b || maxVL < a) && (minVR > b || maxVR < a) = []
@@ -259,7 +243,52 @@ distance a b = sqrt $ fromIntegral $ helper a b
     helper (MkKPoint (x : xs)) (MkKPoint (y : ys)) = (x - y) ^ 2 + helper (MkKPoint xs) (MkKPoint ys)
     helper (MkKPoint []) (MkKPoint []) = 0
 
+closestNeighborInBranch :: Tree [KPoint] -> KPoint -> KPoint
+closestNeighborInBranch (Node l (MkKnot ((i1, i2), (j1, j2))) r) p
+  | p <= i2 = closestNeighborInBranch l p
+  | otherwise = closestNeighborInBranch r p
+closestNeighborInBranch (Leaf []) _ = error "(Leaf []) in closestNeighborInBranch"
+closestNeighborInBranch l@(Leaf (x : xs)) p = helper l p x
+  where
+    helper :: Tree [KPoint] -> KPoint -> KPoint -> KPoint
+    helper (Leaf (l : ls)) p b
+      | distance p l < distance p b = helper (Leaf ls) p l
+      | otherwise = helper (Leaf ls) p b
+    helper (Leaf []) p b = b
+
+pp :: (Show a) => Tree a -> IO () -- Взето от: https://ardumont.github.io/fun-with-binary-search-tree?fbclid=IwAR3h5qHtz-i14oUKOplw6NJiGwyEQMeDCcgJeE_cXbo5u4GKB0FH2gNo56g
+pp = mapM_ putStrLn . treeIndent
+  where
+    treeIndent (Leaf a) = ["---" ++ show a]
+    treeIndent (Node lb c rb) =
+      ["--" ++ show c]
+        ++ map ("  |" ++) ls
+        ++ ("  `" ++ r)
+        : map ("   " ++) rs
+      where
+        (r : rs) = treeIndent rb
+        ls = treeIndent lb
+
+pp1 :: (Show a) => Tree a -> IO ()
+pp1 = mapM_ putStrLn . treeIndent
+  where
+    treeIndent (Leaf a) = ["---" ++ show a]
+    treeIndent (Node lb c rb) =
+      ["--+"]
+        ++ map ("  |" ++) ls
+        ++ ("  `" ++ r)
+        : map ("   " ++) rs
+      where
+        (r : rs) = treeIndent rb
+        ls = treeIndent lb
+
+-- writeFile "TreeVisual.scm" (showTree (splitTree (splitLeaf (Leaf [MkKPoint [1, 2, 3], MkKPoint [2, 1, 3], MkKPoint [3, 2, 5], MkKPoint[6, 3, 1]]) (1, 2)) (2, 3)) 1)
+-- split tree till there is only one element in a leaf
+
 closestNeighbor :: Tree [KPoint] -> KPoint -> KPoint
 closestNeighbor = undefined
+
+sphereIntersectsBox :: KPoint -> KPoint -> KPoint -> KPoint -> Bool
+sphereIntersectsBox o r a b = undefined
 
 -- main :: IO ()
