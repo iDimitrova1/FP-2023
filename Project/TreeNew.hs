@@ -72,6 +72,7 @@ kpointsToIntegers :: [KPoint] -> [[Integer]]
 kpointsToIntegers (MkKPoint p : ps) = p : kpointsToIntegers ps
 kpointsToIntegers [] = []
 
+-- при четен брой елементи, връща по-малкия
 medianIndex :: (Ord a) => [a] -> Integer
 medianIndex xs = case elemIndex (elemByIndex (sort xs) (fromIntegral ((length xs - 1) `div` 2))) xs of
   Just a -> fromIntegral a
@@ -87,24 +88,25 @@ splitKPointsToTree ps k@(MkKnot (ix, MkKPoint p)) = case splitKPoints ps k of
   (_, []) -> splitKPointsToTree ps (makeKnotMidPt ps (mod (ix + 1) (fromIntegral $ length p)))
   (lps, rps) -> Node (Leaf lps) k (Leaf rps)
 
--- splitKPointsToTree ps (makeKnodMidPt ps (mod (ix + 1) (fromIntegral $ length p)))
+-- splitKPointsToTree ps (makeKnotMidPt ps (mod (ix + 1) (fromIntegral $ length p)))
 
 splitLeaf :: Tree [KPoint] -> Knot -> Tree [KPoint]
 splitLeaf t kn@(MkKnot (ix, k@(MkKPoint p))) =
   case t of
-    Leaf [x] -> t
+    -- Leaf [x] -> t
     -- Leaf [] -> error "trying to split an empty leaf"
     Leaf ps -> case splitKPointsToTree ps kn of
-      Leaf a -> splitKPointsToTree ps (makeKnotMidPt ps (mod (ix + 1) (fromIntegral $ length p)))
-      (Node (Leaf a) c (Leaf b)) -> Node (splitLeaf (Leaf a) (makeKnotMidPt a (mod (ix + 1) (fromIntegral $ length p)))) c (splitLeaf (Leaf b) (makeKnotMidPt b (mod (ix + 1) (fromIntegral $ length p))))
+      Leaf a -> Leaf a
+      -- splitKPointsToTree ps (makeKnotMidPt ps (mod (ix + 1) (fromIntegral $ length p)))
+      (Node (Leaf a) c@(MkKnot (i, MkKPoint p1)) (Leaf b)) -> Node (splitLeaf (Leaf a) (makeKnotMidPt a (mod (i + 1) (fromIntegral $ length p1)))) c (splitLeaf (Leaf b) (makeKnotMidPt b (mod (i + 1) (fromIntegral $ length p1))))
 
 splitTree :: Tree [KPoint] -> Tree [KPoint]
 splitTree = splitTreeIt 0
 
 splitTreeIt :: Integer -> Tree [KPoint] -> Tree [KPoint]
-splitTreeIt n (Leaf c) = case splitLeaf (Leaf c) (makeKnotMidPt c n) of
+splitTreeIt n (Leaf c@((MkKPoint p) : ps)) = case splitLeaf (Leaf c) (makeKnotMidPt c n) of
   Leaf a -> Leaf a
-  tr -> splitTreeIt (n + 1) tr
+  tr -> splitTreeIt (mod (n + 1) (fromIntegral $ length p)) tr
 splitTreeIt _ (Node a kn@(MkKnot (ix, MkKPoint p)) b) =
   Node
     (splitTreeIt (mod (ix + 1) (fromIntegral $ length p)) a)
